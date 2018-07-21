@@ -296,45 +296,46 @@ class SimplesearchPlugin extends Plugin
         // If the query string passed in is the empty string, we will treat it as not existing in
         // the title, taxonomy values, or content of the page passed in.
         // Otherwise, we will check whether it exists in those places.
-        if (0 === strcmp($query, '')) {
-            $results = true;
-        } else {
-            foreach ($searchable_types as $type) {
-                if ($type === 'title') {
-                    $result = $this->matchText(strip_tags($page->title()), $query) === false;
-                } elseif ($type === 'taxonomy') {
-                    if ($taxonomies === false) {
+        if ($query === '') {
+            return true;
+        }
+
+        foreach ($searchable_types as $type) {
+            if ($type === 'title') {
+                $result = $this->matchText(strip_tags($page->title()), $query) === false;
+            } elseif ($type === 'taxonomy') {
+                if ($taxonomies === false) {
+                    continue;
+                }
+                $page_taxonomies = $page->taxonomy();
+                $taxonomy_match = false;
+                foreach ((array) $page_taxonomies as $taxonomy => $values) {
+                    // if taxonomies filter set, make sure taxonomy filter is valid
+                    if (!is_array($values) || (is_array($taxonomies) && !empty($taxonomies) && !in_array($taxonomy, $taxonomies))) {
                         continue;
                     }
-                    $page_taxonomies = $page->taxonomy();
-                    $taxonomy_match = false;
-                    foreach ((array) $page_taxonomies as $taxonomy => $values) {
-                        // if taxonomies filter set, make sure taxonomy filter is valid
-                        if (!is_array($values) || (is_array($taxonomies) && !empty($taxonomies) && !in_array($taxonomy, $taxonomies))) {
-                            continue;
-                        }
 
-                        $taxonomy_values = implode('|', $values);
-                        if ($this->matchText($taxonomy_values, $query) !== false) {
-                            $taxonomy_match = true;
-                            break;
-                        }
+                    $taxonomy_values = implode('|', $values);
+                    if ($this->matchText($taxonomy_values, $query) !== false) {
+                        $taxonomy_match = true;
+                        break;
                     }
-                    $result = !$taxonomy_match;
+                }
+                $result = !$taxonomy_match;
+            } else {
+                if ($search_content == 'raw') {
+                    $content = $page->rawMarkdown();
                 } else {
-                    if ($search_content == 'raw') {
-                        $content = $page->rawMarkdown();
-                    } else {
-                        $content = $page->content();
-                    }
-                    $result = $this->matchText(strip_tags($content), $query) === false;
+                    $content = $page->content();
                 }
-                $results = $results && $result;
-                if ($results === false) {
-                    break;
-                }
+                $result = $this->matchText(strip_tags($content), $query) === false;
+            }
+            $results = $results && $result;
+            if ($results === false) {
+                break;
             }
         }
+
         return $results;
     }
 
