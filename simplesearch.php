@@ -309,7 +309,7 @@ class SimplesearchPlugin extends Plugin
                 }
                 $page_taxonomies = $page->taxonomy();
                 $taxonomy_match = false;
-                foreach ((array) $page_taxonomies as $taxonomy => $values) {
+                foreach ((array)$page_taxonomies as $taxonomy => $values) {
                     // if taxonomies filter set, make sure taxonomy filter is valid
                     if (!is_array($values) || (is_array($taxonomies) && !empty($taxonomies) && !in_array($taxonomy, $taxonomies))) {
                         continue;
